@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 class VASVector implements Serializable {
-    ArrayList<Integer> values;
+    private ArrayList<Integer> values;
     private int size = 0;
 
     VASVector(ArrayList<Integer> values) {
@@ -58,11 +58,11 @@ class VASVector implements Serializable {
         return this.hashCode() == obj.hashCode();
     }
 
-    int getSize() {
+    private int getSize() {
         return size;
     }
 
-    Integer valueAt(int index) {
+    private Integer valueAt(int index) {
         return values.get(index);
     }
 
@@ -175,11 +175,7 @@ public class CoverabilityVerifier {
         List<VASVector> vectors = m.collect();
         for (int i = 0; i < vectors.size(); i++) {
             int index = i;
-            if (i == 0) {
-                ret = configurations.filter(c -> c.isBiggerOrEqual(vectors.get(index)));
-            } else {
-                ret = ret.union(configurations.filter(c -> c.isBiggerOrEqual(vectors.get(index))));
-            }
+            ret = i == 0 ? configurations.filter(c -> c.isBiggerOrEqual(vectors.get(index))) : ret.union(configurations.filter(c -> c.isBiggerOrEqual(vectors.get(index))));
         }
         return ret.distinct();
     }
@@ -206,18 +202,8 @@ public class CoverabilityVerifier {
         JavaRDD<VASVector> ret = null;
         for (int i = 0; i < transitions.size(); i++) {
             int index = i;
-            if (i == 0) {
-                ret = vector.map(v -> v.subtract(transitions.get(index)));
-            } else {
-                ret = ret.union(vector.map(v -> v.subtract(transitions.get(index))));
-            }
+            ret = i == 0 ? vector.map(v -> v.subtract(transitions.get(index))) : ret.union(vector.map(v -> v.subtract(transitions.get(index))));
         }
         return ret.distinct();
-    }
-
-    private static void printRDD(JavaRDD<VASVector> rdd, String message) {
-        System.out.println(message + " {");
-        rdd.collect().forEach(v -> System.out.println(v.values));
-        System.out.println("}");
     }
 }
