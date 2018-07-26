@@ -147,8 +147,6 @@ public class CoverabilityVerifier {
             return;
         }
 
-        JavaRDD<VASVector> vectors = context.parallelize(inputVectors);
-
         ArrayList<VASVector> l = new ArrayList<>();
         l.add(m);
         JavaRDD<VASVector> M = context.parallelize(l);
@@ -158,9 +156,9 @@ public class CoverabilityVerifier {
         JavaRDD<VASVector> configurations = m_0.union(M);
 
         final VASVector initial = m0;
-
-        while (upwardClosure(M, configurations).filter(v -> initial.isBiggerOrEqual(v)).isEmpty()) {
-            JavaRDD<VASVector> B = pb(M, inputVectors);
+        // while m0 is not contained in upwardClosure(M)
+        while (upwardClosure(M, configurations).filter(v -> initial.isEqual(v)).isEmpty()) {
+            JavaRDD<VASVector> B = pb(M, inputVectors).subtract(upwardClosure(M, configurations));
             if (B.isEmpty()) {
                 System.out.println("0");
                 return;
@@ -168,9 +166,7 @@ public class CoverabilityVerifier {
             M = minbase(M.union(B));
             configurations = configurations.union(M);
         }
-
         System.out.println("1");
-
         context.stop();
     }
 
@@ -200,7 +196,7 @@ public class CoverabilityVerifier {
                     return false;
                 }
             }
-                return true;
+            return true;
             });
         }
         return ret.distinct();
@@ -217,5 +213,11 @@ public class CoverabilityVerifier {
             }
         }
         return ret.distinct();
+    }
+
+    private static void printRDD(JavaRDD<VASVector> rdd, String message) {
+        System.out.println(message + " {");
+        rdd.collect().forEach(v -> System.out.println(v.values));
+        System.out.println("}");
     }
 }
